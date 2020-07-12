@@ -81,9 +81,6 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
 
     @Override
     public AccessibilityNodeProvider getAccessibilityNodeProvider() {
-        // Instantiate the provide only when requested. Since the system
-        // will call this method multiple times it is a good practice to
-        // cache the provider instance.
         if (mAccessibilityNodeProvider == null) {
             mAccessibilityNodeProvider = new VirtualDescendantsProvider();
         }
@@ -139,10 +136,6 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
     }
 
     private class VirtualDescendantsProvider extends AccessibilityNodeProvider {
-
-        /**
-            * {@inheritDoc}
-            */
         @Override
         public AccessibilityNodeInfo createAccessibilityNodeInfo(int virtualViewId) {
             AccessibilityNodeInfo info = null;
@@ -197,9 +190,6 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
             return info;
         }
 
-        /**
-         * {@inheritDoc}
-         */
         @Override
         public List<AccessibilityNodeInfo> findAccessibilityNodeInfosByText(String searched,
                                                                             int virtualViewId) {
@@ -233,9 +223,6 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
             return result;
         }
 
-        /**
-         * {@inheritDoc}
-         */
         @Override
         public boolean performAction(int virtualViewId, int action, Bundle arguments) {
 
@@ -247,11 +234,12 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
                     case AccessibilityNodeInfo.ACTION_SET_TEXT:
                         CharSequence chars = arguments.getCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE);
                         String searched = chars.toString();
+                        if(TextUtils.isEmpty(searched))
+                            return true; // ignore empty text
                         String searchedLowerCase = searched.toLowerCase();
                         for (int i = 0; i < root.data.size(); i++) {
                             String textToLowerCase = root.data.get(i).toLowerCase();
                             if (textToLowerCase.contains(searchedLowerCase)) {
-                                // found!
                                 root.setItemIndex(i);
                                 break;
                             }
