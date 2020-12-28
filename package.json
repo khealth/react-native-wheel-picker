@@ -13,8 +13,11 @@
   "keywords": [
     "react-native",
     "picker",
-	"wheel"
+    "wheel"
   ],
+  "peerDependencies": {
+    "react-native": ">=0.62"
+  },
   "author": "Yu Zheng",
   "license": "ISC",
   "bugs": {
