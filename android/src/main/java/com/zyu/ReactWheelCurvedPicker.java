@@ -17,6 +17,8 @@ import com.facebook.react.uimanager.events.EventDispatcher;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityManager;
 import android.graphics.Rect;
 import android.view.View;
 import android.text.TextUtils;
@@ -25,12 +27,15 @@ import android.os.Bundle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import android.util.Log;
+import android.speech.tts.TextToSpeech;
+import java.util.Locale;
 
 /**
  * @author <a href="mailto:lesliesam@hotmail.com"> Sam Yu </a>
  */
 public class ReactWheelCurvedPicker extends WheelCurvedPicker {
-
+    private static final String TAG = "ReactWheelCurvedPicker";
     private final EventDispatcher mEventDispatcher;
     private List<Integer> mValueData;
 	
@@ -42,8 +47,28 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
     /** The instance of the node provider for the virtual tree - lazily instantiated. */
     private AccessibilityNodeProvider mAccessibilityNodeProvider; 
 
+    private TextToSpeech mTTS = null;
+
     public ReactWheelCurvedPicker(ReactContext reactContext) {
         super(reactContext);
+
+        //detect if talkbackserive is on
+        AccessibilityManager am = (AccessibilityManager)reactContext.getSystemService("accessibility");
+        boolean isAccessibilityEnabled = am.isEnabled();
+        Log.d(TAG, "TalkBackService:"+isAccessibilityEnabled);
+        if(isAccessibilityEnabled){
+            mTTS = new TextToSpeech(reactContext, new TextToSpeech.OnInitListener () {
+                @Override
+                public void onInit(int status){
+                        Log.d(TAG, "TextToSpeech ready");
+                        mTTS.setLanguage(Locale.US);
+                }
+            });
+        }
+
+    
+
+
         mEventDispatcher = reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher();
         setOnWheelChangeListener(new OnWheelChangeListener() {
             @Override
@@ -55,6 +80,11 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
                 if (mValueData != null && index < mValueData.size()) {
                     mEventDispatcher.dispatchEvent(
                             new ItemSelectedEvent(getId(), mValueData.get(index)));
+                            Log.w(TAG, "ON SELECT:"+data);
+                            sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED);
+                            if(mTTS!=null){
+                                 mTTS.speak(data, TextToSpeech.QUEUE_ADD, null);
+                            }
                 }
             }
 
@@ -78,6 +108,23 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
         info.setEnabled(true);
         info.setText(data.get(itemIndex));
     }
+
+     @Override
+    public void onPopulateAccessibilityEvent (AccessibilityEvent event) {
+        super.onPopulateAccessibilityEvent(event);
+        Log.d(TAG, "ON onPopulateAccessibilityEvent:"+data.get(itemIndex));
+        event.getText().add(data.get(itemIndex));
+    }
+
+    @Override
+    public boolean dispatchPopulateAccessibilityEvent(AccessibilityEvent event) {
+        boolean completed = super.dispatchPopulateAccessibilityEvent(event);
+        event.getText().add(data.get(itemIndex));
+         Log.d(TAG, "ON dispatchPopulateAccessibilityEvent:"+data.get(itemIndex));
+        return true;
+    }
+
+    
 
     @Override
     public AccessibilityNodeProvider getAccessibilityNodeProvider() {
