@@ -15,6 +15,8 @@ import com.facebook.react.uimanager.UIManagerModule;
 import com.facebook.react.uimanager.events.Event;
 import com.facebook.react.uimanager.events.EventDispatcher;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
+
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
 import android.graphics.Rect;
@@ -33,7 +35,7 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
 
     private final EventDispatcher mEventDispatcher;
     private List<Integer> mValueData;
-	
+ 
     private Integer mLineColor = Color.WHITE; // Default line color
     private boolean isLineGradient = false;    // By default line color is not a gradient
     private Integer mLinegradientFrom = Color.BLACK; // Default starting gradient color
@@ -55,6 +57,8 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
                 if (mValueData != null && index < mValueData.size()) {
                     mEventDispatcher.dispatchEvent(
                             new ItemSelectedEvent(getId(), mValueData.get(index)));
+                    sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED);
+                    setContentDescription(data);
                 }
             }
 
@@ -77,6 +81,19 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
         info.setScrollable(isVisible);
         info.setEnabled(true);
         info.setText(data.get(itemIndex));
+    }
+
+     @Override
+    public void onPopulateAccessibilityEvent (AccessibilityEvent event) {
+        super.onPopulateAccessibilityEvent(event);
+        event.getText().add(data.get(itemIndex));
+    }
+
+    @Override
+    public boolean dispatchPopulateAccessibilityEvent(AccessibilityEvent event) {
+        boolean completed = super.dispatchPopulateAccessibilityEvent(event);
+        event.getText().add(data.get(itemIndex));
+        return completed;
     }
 
     @Override
@@ -125,6 +142,8 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
         super.setItemIndex(index);
         unitDeltaTotal = 0;
 		mHandler.post(this);
+        if(itemIndex < data.size())
+            setContentDescription(data.get(itemIndex));
     }
 
     public void setValueData(List<Integer> data) {
@@ -245,11 +264,14 @@ public class ReactWheelCurvedPicker extends WheelCurvedPicker {
                             }
                         }
                         return true;
+                    default:
+                        return root.performAccessibilityAction(action, arguments);
                 }
             }
+
             return false;
         }
-    }  
+    }
 }
 
 class ItemSelectedEvent extends Event<ItemSelectedEvent> {
