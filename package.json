@@ -16,15 +16,13 @@
     "wheel"
   ],
   "peerDependencies": {
-    "react-native": ">=0.62"
+    "react-native": ">=0.62",
+    "@react-native-community/picker": "^1.8.1"
   },
   "author": "Yu Zheng",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/lesliesam/react-native-wheel-picker/issues"
   },
-  "homepage": "https://github.com/lesliesam/react-native-wheel-picker#readme",
-  "dependencies": {
-    "@react-native-community/picker": "^1.8.1"
-  }
+  "homepage": "https://github.com/lesliesam/react-native-wheel-picker#readme"
 }
